@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Hành Trình Sinh Viên Năm 4: ShopeeFood Shipper & Ước Mơ 🛵🎓</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Canvas chính để vẽ thế giới game 60 FPS -->
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD Thông tin người chơi (Góc trên trái) -->
+    <div id="player-hud" class="hud-card glass">
+      <div class="avatar-box">
+        <div class="avatar-icon">🎓</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="hud-info">
+        <div class="player-title">Sinh Viên Năm 4 Đại Học <span class="badge-role">Shipper ShopeeFood</span></div>
+        <div class="stats-row">
+          <div class="stat-item"><span class="icon">💰</span> <span id="money-display" class="highlight">0 đ</span></div>
+          <div class="stat-item"><span class="icon">💖</span> <span id="energy-text">Tinh thần: 100%</span></div>
+        </div>
+        <div class="energy-bar-bg">
+          <div id="energy-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD Nhiệm Vụ & App ShopeeFood Ảo (Góc trên phải) -->
+    <div id="quest-hud" class="hud-card glass">
+      <div class="quest-header">
+        <span class="quest-app-icon">🛵</span>
+        <span class="quest-title-text" id="quest-title">Nhiệm Vụ Hiện Tại</span>
+        <span class="quest-pulse"></span>
+      </div>
+      <div class="quest-desc" id="quest-desc">
+        Rời khỏi phòng trọ, đến gần chiếc xe máy ShopeeFood màu cam và nhấn [E] để bắt đầu ca chạy tối!
+      </div>
+      <div class="quest-target-badge" id="quest-target-tag">
+        📍 Mục tiêu: Xe máy ShopeeFood
+      </div>
+    </div>
+
+    <!-- Nút điều khiển âm thanh & Lofi Chill (Góc trên giữa) -->
+    <div id="audio-panel" class="glass">
+      <button id="btn-toggle-music" class="audio-btn" title="Bật/Tắt Nhạc Lofi Đêm">
+        <span class="audio-icon">🎵</span> <span id="music-status-text">Lofi: Đang Tắt</span>
+      </button>
+      <button id="btn-toggle-sfx" class="audio-btn" title="Bật/Tắt Hiệu Ứng Âm Thanh">
+        <span class="audio-icon">🔊</span> SFX: Bật
+      </button>
+    </div>
+
+    <!-- Hướng Dẫn Tương Tác Giữa Màn Hình (Tự động hiện khi đến gần xe, NPC, quán) -->
+    <div id="interact-prompt" class="hidden">
+      <div class="key-badge">E</div>
+      <span id="interact-text">Lên xe máy ShopeeFood</span>
+    </div>
+
+    <!-- Thông Báo Nổ Đơn / Chúc Mừng (Toast Notification) -->
+    <div id="toast-notify" class="hidden">
+      <div class="toast-icon" id="toast-icon">📦</div>
+      <div class="toast-body">
+        <div class="toast-title" id="toast-title">NỔ ĐƠN SHOPEEFOOD!</div>
+        <div class="toast-content" id="toast-desc">Có đơn hàng mới tại Quán Cơm Tấm Đêm!</div>
+      </div>
+    </div>
+
+    <!-- Hộp Thoại Trò Chuyện / Lời Nhắn Ấm Áp (Dialogue Box) -->
+    <div id="dialog-box" class="glass hidden">
+      <div class="dialog-avatar" id="dialog-avatar">🐱</div>
+      <div class="dialog-content">
+        <div class="dialog-speaker" id="dialog-speaker">Bé Mèo Công Viên</div>
+        <div class="dialog-message" id="dialog-message">"Meow meow~ Cả ngày chạy đơn và làm đồ án vất vả rồi, nghỉ chân một chút nhé bạn ơi!"</div>
+        <div class="dialog-action-hint">Nhấn [Space] hoặc [E] để đóng</div>
+      </div>
+    </div>
+
+    <!-- Minimap Radar GTA Style (Góc dưới trái) -->
+    <div id="minimap-container" class="glass">
+      <canvas id="minimapCanvas" width="160" height="160"></canvas>
+      <div class="minimap-north">N</div>
+      <div class="minimap-label">GPS BẢN ĐỒ</div>
+    </div>
+
+    <!-- Hướng Dẫn Phím Bấm (Góc dưới phải) -->
+    <div id="controls-help" class="glass">
+      <div class="ctrl-title">🎮 BẢNG ĐIỀU KHIỂN</div>
+      <div class="ctrl-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> : Di chuyển</div>
+      <div class="ctrl-row"><kbd>Shift</kbd> : Chạy nhanh (Lấp lánh)</div>
+      <div class="ctrl-row"><kbd>E</kbd> : Tương tác (Lên/xuống xe, nhận món, xoa mèo)</div>
+      <div class="ctrl-row"><kbd>H</kbd> : Bóp còi xe máy (Tin tin)</div>
+      <div class="ctrl-row"><kbd>F</kbd> : Thả tim yêu đời ❤️</div>
+      <div class="ctrl-row"><kbd>M</kbd> : Bật/Tắt Nhạc Lofi</div>
+    </div>
+  </div>
+
+  <!-- Các module game -->
+  <script src="js/sound.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/entity.js"></script>
+  <script src="js/quests.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #12151c;
+  font-family: 'Nunito', 'Comfortaa', sans-serif;
+  color: #fff;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #141721;
+}
+
+/* Glassmorphism Styles */
+.glass {
+  background: rgba(22, 27, 40, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* HUD Top Left: Player Status */
+#player-hud {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  z-index: 10;
+  min-width: 310px;
+}
+
+.avatar-box {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7e5f, #feb47b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 126, 95, 0.4);
+}
+
+.avatar-icon {
+  font-size: 24px;
+}
+
+.online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #2ecc71;
+  border: 2px solid #161b28;
+  border-radius: 50%;
+}
+
+.hud-info {
+  flex: 1;
+}
+
+.player-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0e6ed;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.badge-role {
+  background: #ee4d2d; /* Shopee Orange */
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(238, 77, 45, 0.4);
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.stat-item .highlight {
+  color: #f1c40f;
+  font-weight: 800;
+}
+
+.energy-bar-bg {
+  width: 100%;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#energy-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff758c, #ff7eb3);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 117, 140, 0.7);
+}
+
+/* HUD Top Right: Quest Card */
+#quest-hud {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 14px 20px;
+  max-width: 360px;
+  z-index: 10;
+  border-left: 4px solid #ee4d2d;
+}
+
+.quest-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.quest-app-icon {
+  font-size: 18px;
+}
+
+.quest-title-text {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ff9a76;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.quest-pulse {
+  width: 8px;
+  height: 8px;
+  background: #ee4d2d;
+  border-radius: 50%;
+  margin-left: auto;
+  box-shadow: 0 0 10px #ee4d2d;
+  animation: pulseAnim 1.5s infinite;
+}
+
+@keyframes pulseAnim {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.quest-desc {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.quest-target-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(238, 77, 45, 0.18);
+  border: 1px solid rgba(238, 77, 45, 0.5);
+  color: #ffaa94;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+/* Top Center: Audio Panel */
+#audio-panel {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 8px 14px;
+  z-index: 10;
+}
+
+.audio-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.audio-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.audio-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: #a3bffa;
+  box-shadow: 0 0 12px rgba(118, 75, 162, 0.5);
+}
+
+/* Center Prompt */
+#interact-prompt {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 20, 32, 0.9);
+  border: 1px solid #ff7e5f;
+  box-shadow: 0 0 20px rgba(255, 126, 95, 0.4);
+  padding: 10px 22px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  z-index: 15;
+  animation: bouncePrompt 1.8s infinite;
+  pointer-events: none;
+}
+
+@keyframes bouncePrompt {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -58%) scale(1.05); }
+}
+
+.key-badge {
+  background: #ff7e5f;
+  color: #fff;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Toast Notification (Nổ Đơn) */
+#toast-notify {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff5722, #ee4d2d);
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 30;
+  box-shadow: 0 12px 35px rgba(238, 77, 45, 0.5);
+  animation: slideToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideToast {
+  from { transform: translate(-50%, -30px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.toast-icon {
+  font-size: 28px;
+  animation: shakeIcon 0.8s infinite alternate;
+}
+
+@keyframes shakeIcon {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(10deg); }
+}
+
+.toast-title {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.toast-desc {
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+/* Dialogue Box (Trò chuyện & Chữa lành) */
+#dialog-box {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 680px;
+  padding: 20px 26px;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  z-index: 25;
+  border-bottom: 3px solid #ff7e5f;
+  animation: fadeDialog 0.3s ease;
+}
+
+@keyframes fadeDialog {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.dialog-avatar {
+  font-size: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 14px;
+}
+
+.dialog-content {
+  flex: 1;
+}
+
+.dialog-speaker {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ff9a76;
+  margin-bottom: 6px;
+}
+
+.dialog-message {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #f1f5f9;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.dialog-action-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Minimap Radar (Góc dưới trái) */
+#minimap-container {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  padding: 8px;
+  border-radius: 50%;
+  width: 176px;
+  height: 176px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border: 2px solid rgba(255, 126, 95, 0.5);
+  box-shadow: 0 0 25px rgba(255, 126, 95, 0.25);
+  overflow: hidden;
+}
+
+#minimapCanvas {
+  border-radius: 50%;
+  background: #0f131a;
+  display: block;
+}
+
+.minimap-north {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 900;
+  color: #ff7e5f;
+  text-shadow: 0 0 6px rgba(255, 126, 95, 0.8);
+}
+
+.minimap-label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+/* Controls Help Box (Góc dưới phải) */
+#controls-help {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  padding: 12px 18px;
+  font-size: 12px;
+  z-index: 10;
+  color: #cbd5e1;
+}
+
+.ctrl-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ff9a76;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.ctrl-row {
+  margin-bottom: 4px;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background-color: #334155;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 #1e293b;
+  margin: 0 2px;
+  font-family: inherit;
+}
+
+/* Utilities */
+.hidden {
+  display: none !important;
+}

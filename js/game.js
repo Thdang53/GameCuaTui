@@ -13,13 +13,22 @@ class Game {
     this.keys = {};
     this.lastTime = 0;
 
-    // Camera mượt mà theo nhân vật
+    // Camera mượt mà theo nhân vật với 3 chế độ góc nhìn chuẩn GTA
     this.camera = {
-      x: 0,
-      y: 0,
-      targetX: 0,
-      targetY: 0
+      x: 320,
+      y: 420,
+      targetX: 320,
+      targetY: 420,
+      zoom: 1.0,
+      targetZoom: 1.0,
+      mode: 0 // 0: Dynamic GTA, 1: Close-up Chibi, 2: Bird's Eye View
     };
+
+    this.cameraModes = [
+      { id: 0, name: 'Dynamic GTA 🎥', baseZoom: 1.0, hasLookAhead: true },
+      { id: 1, name: 'Cận Cảnh (Chibi) 🔍', baseZoom: 1.35, hasLookAhead: false },
+      { id: 2, name: 'Toàn Cảnh (Flycam) 🚁', baseZoom: 0.72, hasLookAhead: true }
+    ];
 
     // Khởi tạo các hệ thống
     this.world = new WorldMap();
@@ -98,6 +107,11 @@ class Game {
         this.handleInteraction();
       }
 
+      // Phím V: Đổi góc nhìn Camera
+      if (e.code === 'KeyV') {
+        this.toggleCameraMode();
+      }
+
       // Phím H: Còi xe máy
       if (e.code === 'KeyH') {
         if (this.player.isRiding) {
@@ -127,6 +141,11 @@ class Game {
     });
 
     // UI Buttons
+    const btnCam = document.getElementById('btn-toggle-camera');
+    if (btnCam) {
+      btnCam.addEventListener('click', () => this.toggleCameraMode());
+    }
+
     const btnMusic = document.getElementById('btn-toggle-music');
     if (btnMusic) {
       btnMusic.addEventListener('click', () => this.toggleLofi());
@@ -147,6 +166,17 @@ class Game {
     if (dialogBox) {
       dialogBox.addEventListener('click', () => this.closeDialog());
     }
+  }
+
+  toggleCameraMode() {
+    this.camera.mode = (this.camera.mode + 1) % this.cameraModes.length;
+    const mode = this.cameraModes[this.camera.mode];
+    const btnText = document.getElementById('camera-status-text');
+    if (btnText) {
+      btnText.innerText = `Góc Nhìn: ${mode.name}`;
+    }
+    this.showToast('GÓC NHÌN CAMERA 🎥', `Đã chuyển sang chế độ: ${mode.name}`);
+    window.soundEngine.playSparkle();
   }
 
   toggleLofi() {
@@ -249,16 +279,44 @@ class Game {
     // 4. Kiểm tra tiến độ nhiệm vụ
     this.quests.checkProgress(this.player, this.motorcycle);
 
-    // 5. Cập nhật Camera (Lerp mượt mà bám theo player)
-    this.camera.targetX = this.player.x - this.canvas.width / 2;
-    this.camera.targetY = this.player.y - this.canvas.height / 2;
+    // 5. Cập nhật Camera theo góc nhìn và tốc độ xe (GTA Dynamic Camera)
+    const curMode = this.cameraModes[this.camera.mode];
+    let focusX = this.player.x;
+    let focusY = this.player.y;
+
+    // Look-ahead: Khi lái xe hoặc chạy nhanh, camera nhìn xa về phía trước theo hướng di chuyển
+    if (curMode.hasLookAhead) {
+      if (this.player.isRiding) {
+        const leadDist = this.motorcycle.speed * 25; // xe phóng càng nhanh, camera nhìn càng xa phía trước
+        focusX += Math.cos(this.motorcycle.angle) * leadDist;
+        focusY += Math.sin(this.motorcycle.angle) * leadDist;
+      } else if (this.player.isSprinting && this.player.isMoving) {
+        const leadDirs = { up: [0, -50], down: [0, 50], left: [-50, 0], right: [50, 0] };
+        const d = leadDirs[this.player.facing] || [0, 0];
+        focusX += d[0];
+        focusY += d[1];
+      }
+    }
+
+    // Dynamic Zoom: Khi lái xe tốc độ cao ở chế độ Dynamic GTA, zoom out nhẹ tạo cảm giác lướt gió tốc độ
+    let desiredZoom = curMode.baseZoom;
+    if (this.camera.mode === 0 && this.player.isRiding) {
+      const speedRatio = Math.abs(this.motorcycle.speed) / this.motorcycle.maxSpeed;
+      desiredZoom = 1.05 - speedRatio * 0.16; // 1.05x -> 0.89x
+    }
+
+    this.camera.targetZoom = desiredZoom;
+    this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * 0.08;
+
+    this.camera.targetX = focusX;
+    this.camera.targetY = focusY;
 
     this.camera.x += (this.camera.targetX - this.camera.x) * 0.08;
     this.camera.y += (this.camera.targetY - this.camera.y) * 0.08;
 
     // Giới hạn camera trong thế giới
-    this.camera.x = Math.max(0, Math.min(this.camera.x, this.world.width - this.canvas.width));
-    this.camera.y = Math.max(0, Math.min(this.camera.y, this.world.height - this.canvas.height));
+    this.camera.x = Math.max(100, Math.min(this.camera.x, this.world.width - 100));
+    this.camera.y = Math.max(100, Math.min(this.camera.y, this.world.height - 100));
 
     // 6. Cập nhật UI & Gợi ý tương tác (Prompt)
     this.updateUI();
@@ -321,7 +379,9 @@ class Game {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     ctx.save();
-    // Di chuyển màn hình theo Camera
+    // Di chuyển màn hình theo Camera và áp dụng Zoom mượt mà
+    ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+    ctx.scale(this.camera.zoom, this.camera.zoom);
     ctx.translate(-Math.floor(this.camera.x), -Math.floor(this.camera.y));
 
     // 1. Mặt đất, đường xá, công viên

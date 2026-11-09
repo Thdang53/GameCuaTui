@@ -273,34 +273,46 @@ class Motorcycle {
     this.steerSpeed = 0.055;
     this.facing = 'right';
     this.isOccupied = false;
+    this.leanAngle = 0; // Độ nghiêng khi ôm cua
     this.tireTracks = [];
+    this.exhaustPuffs = [];
   }
 
   update(keys, world) {
     if (!this.isOccupied) {
       this.speed *= 0.85;
+      this.leanAngle *= 0.8;
       return;
     }
 
     // Tăng tốc / Lùi
+    let isAccelerating = false;
     if (keys['KeyW'] || keys['ArrowUp']) {
       this.speed = Math.min(this.speed + this.accel, this.maxSpeed);
+      isAccelerating = true;
     } else if (keys['KeyS'] || keys['ArrowDown']) {
       this.speed = Math.max(this.speed - this.accel, -this.maxSpeed * 0.4);
     } else {
       this.speed *= this.friction;
     }
 
-    // Quẹo trái / phải
+    // Quẹo trái / phải & Tính độ nghiêng xe (Leaning)
+    let steerDir = 0;
     if (Math.abs(this.speed) > 0.3) {
       const dir = this.speed > 0 ? 1 : -1;
       if (keys['KeyA'] || keys['ArrowLeft']) {
         this.angle -= this.steerSpeed * dir;
+        steerDir = -1;
       }
       if (keys['KeyD'] || keys['ArrowRight']) {
         this.angle += this.steerSpeed * dir;
+        steerDir = 1;
       }
     }
+
+    // Độ nghiêng ôm cua mượt mà
+    const targetLean = steerDir * (Math.abs(this.speed) / this.maxSpeed) * 0.28;
+    this.leanAngle += (targetLean - this.leanAngle) * 0.15;
 
     // Di chuyển xe
     const nextX = this.x + Math.cos(this.angle) * this.speed;
@@ -318,7 +330,23 @@ class Motorcycle {
       this.speed *= -0.3;
     }
 
-    // Vết bánh xe mờ dần
+    // Khói ống xả khi tăng tốc
+    if (isAccelerating && Math.random() > 0.4) {
+      this.exhaustPuffs.push({
+        x: this.x - Math.cos(this.angle) * 26 + (Math.random() - 0.5) * 4,
+        y: this.y - Math.sin(this.angle) * 26 + (Math.random() - 0.5) * 4,
+        r: 3 + Math.random() * 4,
+        alpha: 0.6
+      });
+    }
+
+    this.exhaustPuffs.forEach(p => {
+      p.alpha -= 0.04;
+      p.r += 0.3;
+    });
+    this.exhaustPuffs = this.exhaustPuffs.filter(p => p.alpha > 0);
+
+    // Vết bánh xe mờ dần khi drift / chạy nhanh
     if (Math.abs(this.speed) > 4 && Math.random() > 0.5) {
       this.tireTracks.push({
         x: this.x - Math.cos(this.angle) * 15,
@@ -332,6 +360,14 @@ class Motorcycle {
   }
 
   render(ctx) {
+    // Vẽ khói ống xả
+    for (const p of this.exhaustPuffs) {
+      ctx.fillStyle = `rgba(200, 210, 230, ${p.alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // Vẽ vết bánh xe
     for (const t of this.tireTracks) {
       ctx.fillStyle = `rgba(0, 0, 0, ${t.alpha})`;
@@ -342,30 +378,34 @@ class Motorcycle {
 
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
+    ctx.rotate(this.angle + this.leanAngle * 0.4);
 
     // 1. Ánh đèn pha phía trước xe chiếu sáng trong đêm
-    const headGlow = ctx.createRadialGradient(28, 0, 2, 85, 0, 75);
-    headGlow.addColorStop(0, 'rgba(255, 255, 200, 0.45)');
-    headGlow.addColorStop(0.6, 'rgba(255, 255, 200, 0.15)');
+    const headGlow = ctx.createRadialGradient(28, 0, 2, 85, 0, 85);
+    headGlow.addColorStop(0, 'rgba(255, 255, 200, 0.5)');
+    headGlow.addColorStop(0.5, 'rgba(255, 255, 200, 0.2)');
     headGlow.addColorStop(1, 'rgba(255, 255, 200, 0)');
     ctx.fillStyle = headGlow;
     ctx.beginPath();
     ctx.moveTo(25, 0);
-    ctx.arc(25, 0, 110, -0.45, 0.45);
+    ctx.arc(25, 0, 130, -0.45, 0.45);
     ctx.closePath();
     ctx.fill();
 
-    // 2. Bóng xe máy
+    // 2. Bóng xe máy (có hiệu ứng nghiêng)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.beginPath();
-    ctx.ellipse(0, 4, 24, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 4 + this.leanAngle * 8, 25, 11, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // 3. Bánh xe trước & sau
     ctx.fillStyle = '#1e293b';
-    ctx.fillRect(16, -4, 8, 8); // Bánh trước
-    ctx.fillRect(-22, -4, 8, 8); // Bánh sau
+    ctx.fillRect(16, -4, 9, 8); // Bánh trước
+    ctx.fillRect(-23, -4, 9, 8); // Bánh sau
+    // Mâm vành xe
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(19, -2, 3, 4);
+    ctx.fillRect(-20, -2, 3, 4);
 
     // 4. Khung thân xe Vespa màu cam sữa pastel
     ctx.fillStyle = '#ff7a45';
@@ -379,6 +419,10 @@ class Motorcycle {
     ctx.roundRect(4, -7, 12, 14, 4);
     ctx.fill();
 
+    // Sàn để chân
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(2, -6, 5, 12);
+
     // Yên xe bọc da nâu
     ctx.fillStyle = '#5c3a21';
     ctx.beginPath();
@@ -387,16 +431,27 @@ class Motorcycle {
 
     // Tay lái (Handlebars)
     ctx.fillStyle = '#94a3b8';
-    ctx.fillRect(12, -10, 3, 20);
+    ctx.fillRect(12, -11, 3, 22);
     ctx.fillStyle = '#1e293b';
-    ctx.fillRect(11, -11, 4, 3);
-    ctx.fillRect(11, 8, 4, 3);
+    ctx.fillRect(11, -12, 4, 4);
+    ctx.fillRect(11, 8, 4, 4);
+
+    // Gương chiếu hậu 2 bên (Cute)
+    ctx.fillStyle = '#cbd5e1';
+    ctx.beginPath();
+    ctx.arc(10, -13, 2.5, 0, Math.PI * 2);
+    ctx.arc(10, 13, 2.5, 0, Math.PI * 2);
+    ctx.fill();
 
     // Đèn pha trước
     ctx.fillStyle = '#fef08a';
     ctx.beginPath();
-    ctx.arc(19, 0, 3, 0, Math.PI * 2);
+    ctx.arc(19, 0, 3.5, 0, Math.PI * 2);
     ctx.fill();
+
+    // Đèn hậu đỏ sau xe
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-26, -3, 2, 6);
 
     // 5. Thùng Hàng ShopeeFood To Đùng Phía Sau (Đặc Trưng Shipper)
     ctx.fillStyle = '#ee4d2d';
@@ -406,30 +461,67 @@ class Motorcycle {
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.strokeRect(-25, -9, 14, 18);
-    // Logo ShopeeFood chữ 'S' hoặc túi xách
+    // Logo ShopeeFood chữ 'S'
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('S', -18, 4);
 
-    // 6. Nếu có người đang ngồi lái: Vẽ người đội nón bảo hiểm
+    // 6. Nếu có người đang ngồi lái: Vẽ nhân vật Anime lái xe siêu chi tiết!
     if (this.isOccupied) {
-      // Thân người ngồi
+      // Hai chân đặt trên sàn xe
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(1, -9, 4, 3);
+      ctx.fillRect(1, 6, 4, 3);
+
+      // Thân người mặc áo cam ShopeeFood
       ctx.fillStyle = '#ee4d2d';
       ctx.beginPath();
-      ctx.arc(-2, 0, 9, 0, Math.PI * 2);
+      ctx.roundRect(-6, -7, 13, 14, 5);
+      ctx.fill();
+      // Vạch trắng phản quang áo gió
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, -1, 13, 2.5);
+
+      // Hai tay duỗi ra nắm ghi-đông xe máy
+      ctx.fillStyle = '#ee4d2d';
+      ctx.fillRect(4, -8, 8, 3);
+      ctx.fillRect(4, 5, 8, 3);
+      // Găng tay lái xe
+      ctx.fillStyle = '#ffdfba';
+      ctx.fillRect(10, -9, 3, 4);
+      ctx.fillRect(10, 5, 3, 4);
+
+      // Ba lô nhỏ sau lưng
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.roundRect(-10, -5, 5, 10, 2);
       ctx.fill();
 
-      // Nón bảo hiểm có kính chắn gió
-      ctx.fillStyle = '#f59e0b';
+      // Nón bảo hiểm Anime phong cách Cute có tai mèo & kính chắn gió
+      ctx.fillStyle = '#f59e0b'; // Nón vàng cam nổi bật
       ctx.beginPath();
-      ctx.arc(0, 0, 8, 0, Math.PI * 2);
+      ctx.arc(0, 0, 9, 0, Math.PI * 2);
       ctx.fill();
-      // Kính chắn gió nón
+
+      // Tai mèo nhỏ trên nón bảo hiểm (Cute Detail!)
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.moveTo(-4, -8); ctx.lineTo(-1, -12); ctx.lineTo(2, -8);
+      ctx.moveTo(-4, 8); ctx.lineTo(-1, 12); ctx.lineTo(2, 8);
+      ctx.fill();
+
+      // Kính chắn gió bảo hộ nón
       ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
-      ctx.arc(3, 0, 5, -0.6, 0.6);
+      ctx.arc(3, 0, 6, -0.65, 0.65);
       ctx.fill();
+      // Vệt sáng lóa trên kính
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(4, 0, 4, -0.3, 0.3);
+      ctx.stroke();
     }
 
     ctx.restore();

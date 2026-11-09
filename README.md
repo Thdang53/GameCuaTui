@@ -32,7 +32,8 @@
 | :--- | :--- |
 | 🗺️ **Thế Giới Mở Rộng Lớn (Open World)** | Bản đồ 3000 x 2400 px gồm đường sá, vỉa hè lát gạch, vạch qua đường, trường đại học, khu chung cư Sakura, ký túc xá, quán cơm tấm đêm, tiệm trà sữa Boba và công viên hồ nước. |
 | 👧 **Nhân Vật Anime Chibi Đáng Yêu** | Thiết kế phong cách Chibi mắt to long lanh, tóc bồng bềnh, áo khoác cam ShopeeFood, mang ba lô sinh viên, hoạt ảnh bước đi nhấp nhô và hiệu ứng lấp lánh khi chạy nhanh. |
-| 🛵 **Cơ Chế Lái Xe Máy GTA Style** | Chiếc xe máy Vespa/Scooter màu cam gắn thùng hàng ShopeeFood. Nhấn `E` để lên/xuống xe, tăng tốc, quẹo cua, drift nhẹ, bật đèn pha chiếu sáng đêm và bóp còi "tin tin" (`H`). |
+| 🛵 **Cơ Chế Lái Xe Máy GTA Style** | Chiếc xe máy Vespa/Scooter màu cam gắn thùng hàng ShopeeFood. Nhấn `E` để lên/xuống xe, tăng tốc, quẹo cua có độ nghiêng xe (Leaning Tilt) siêu mượt, hiệu ứng khói ống xả, nón bảo hiểm tai mèo cute có kính chắn gió, bật đèn pha chiếu sáng đêm và bóp còi "tin tin" (`H`). |
+| 🎥 **Hệ Thống Góc Nhìn Camera Đa Dạng** | Nhấn phím `V` hoặc bấm nút trên màn hình để chuyển đổi giữa 3 góc nhìn chuẩn GTA: **Dynamic Chase Cam** (camera tự động nhìn xa về phía trước và zoom theo tốc độ), **Cận Cảnh Chibi** (zoom to 1.35x ngắm chi tiết anime), và **Toàn Cảnh Flycam** (zoom rộng 0.72x bao quát cả thành phố). |
 | 📦 **Hệ Thống Đơn Hàng ShopeeFood** | Âm thanh *ting ting* nổ đơn chân thực, radar GPS chỉ đường đến quán lấy món (Cơm tấm đêm, Trà sữa boba) rồi giao tận tay khách hàng nhận tiền thù lao `💰` và lời cảm ơn ấm lòng. |
 | 🎓 **Nhiệm Vụ Đồ Án Năm 4** | Lên Trường Đại Học gặp Thầy Hướng Dẫn nộp đề tài tốt nghiệp, nhận lời khen và sự công nhận xứng đáng cho nghị lực tự lập. |
 | 🌸 **Khu Vực Chữa Lành (Zen Garden)** | Hàng cây hoa anh đào với hàng chục cánh hoa hồng rơi trong gió, hồ nước đàn vịt bơi, bé mèo mướp ve vẩy đuôi để bạn xoa đầu giải tỏa muộn phiền. |
@@ -47,6 +48,7 @@
 | :---: | :--- |
 | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd> | Di chuyển nhân vật / Lái xe máy |
 | <kbd>Shift</kbd> | Chạy nhanh (Tạo bụi hạt lấp lánh) |
+| <kbd>V</kbd> | **Đổi góc nhìn Camera** (Dynamic GTA / Cận Cảnh / Toàn Cảnh) |
 | <kbd>E</kbd> | **Tương tác**: Lên / Xuống xe máy, Nhận đơn, Giao hàng, Xoa mèo |
 | <kbd>H</kbd> | Bóp còi xe máy (*Tin tin*) |
 | <kbd>F</kbd> | Thả tim yêu đời 💖 |

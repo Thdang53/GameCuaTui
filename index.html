@@ -47,13 +47,19 @@
       </div>
     </div>
 
-    <!-- Nút điều khiển âm thanh & Góc nhìn Camera (Góc trên giữa) -->
+    <!-- Nút điều khiển âm thanh, thời tiết & Góc nhìn Camera (Góc trên giữa) -->
     <div id="audio-panel" class="glass">
       <button id="btn-toggle-camera" class="audio-btn" title="Đổi Góc Nhìn Camera (Phím V)">
         <span class="audio-icon">🎥</span> <span id="camera-status-text">Góc Nhìn: Dynamic GTA</span>
       </button>
+      <button id="btn-toggle-weather" class="audio-btn" title="Đổi Thời Tiết Mưa Đêm / Trời Sao (Phím R)">
+        <span class="audio-icon">🌙</span> <span id="weather-status-text">Trời: Trăng Sao</span>
+      </button>
+      <button id="btn-toggle-color" class="audio-btn" title="Đổi Màu Sơn Xe Máy (Phím C)">
+        <span class="audio-icon">🎨</span> Màu Xe
+      </button>
       <button id="btn-toggle-music" class="audio-btn" title="Bật/Tắt Nhạc Lofi Đêm (Phím M)">
-        <span class="audio-icon">🎵</span> <span id="music-status-text">Lofi: Đang Tắt</span>
+        <span class="audio-icon">🎵</span> <span id="music-status-text">Lofi: Tắt</span>
       </button>
       <button id="btn-toggle-sfx" class="audio-btn" title="Bật/Tắt Hiệu Ứng Âm Thanh">
         <span class="audio-icon">🔊</span> SFX: Bật
@@ -72,6 +78,30 @@
       <div class="toast-body">
         <div class="toast-title" id="toast-title">NỔ ĐƠN SHOPEEFOOD!</div>
         <div class="toast-content" id="toast-desc">Có đơn hàng mới tại Quán Cơm Tấm Đêm!</div>
+      </div>
+    </div>
+
+    <!-- Minigame Đồ Án Tốt Nghiệp "Bàn Phím Cơ Siêu Tốc" (Modal) -->
+    <div id="thesis-modal" class="glass hidden">
+      <div class="thesis-header">
+        <div class="thesis-title">💻 ĐỒ ÁN TỐT NGHIỆP: NĂM 4 BÁCH KHOA</div>
+        <button id="btn-close-thesis" class="close-btn">✕</button>
+      </div>
+      <div class="thesis-progress-container">
+        <div class="thesis-progress-label">Tiến Độ Hoàn Thành: <span id="thesis-percent" class="highlight">0%</span></div>
+        <div class="thesis-bar-bg">
+          <div id="thesis-bar-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+      <div class="thesis-editor">
+        <div class="editor-tabs">📄 do_an_khoa_luan_nam4.tex</div>
+        <div class="editor-content" id="thesis-editor-content">
+          // Nhấn phím bất kỳ trên bàn phím thật nhanh để viết bài...<br>
+          <span class="blinking-cursor">|</span>
+        </div>
+      </div>
+      <div class="thesis-footer">
+        <div class="keyboard-tip">⌨️ Gõ bất kỳ phím nào để trải nghiệm âm thanh Switch Bàn Phím Cơ cực đã tai!</div>
       </div>
     </div>
 
@@ -98,8 +128,10 @@
       <div class="ctrl-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> : Di chuyển</div>
       <div class="ctrl-row"><kbd>Shift</kbd> : Chạy nhanh (Lấp lánh)</div>
       <div class="ctrl-row"><kbd>E</kbd> : Tương tác (Lên/xuống xe, nhận món, xoa mèo)</div>
-      <div class="ctrl-row"><kbd>V</kbd> : Đổi góc nhìn Camera (3 chế độ)</div>
-      <div class="ctrl-row"><kbd>H</kbd> : Bóp còi xe máy (Tin tin)</div>
+      <div class="ctrl-row"><kbd>V</kbd> : Đổi góc nhìn (Buồng lái POV / GTA / Flycam)</div>
+      <div class="ctrl-row"><kbd>R</kbd> : Đổi thời tiết (Mưa rơi ASMR / Trời sao)</div>
+      <div class="ctrl-row"><kbd>C</kbd> : Đổi màu sơn xe máy</div>
+      <div class="ctrl-row"><kbd>H</kbd> : Bóp còi / Vịt vàng kêu quạc quạc</div>
       <div class="ctrl-row"><kbd>F</kbd> : Thả tim yêu đời ❤️</div>
       <div class="ctrl-row"><kbd>M</kbd> : Bật/Tắt Nhạc Lofi</div>
     </div>

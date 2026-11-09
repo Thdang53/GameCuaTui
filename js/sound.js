@@ -164,6 +164,110 @@ class SoundEngine {
     });
   }
 
+  // Tiếng chú Vịt Vàng gắn ghi đông kêu Quạc Quạc / Bíp Bíp
+  playDuckQuack() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(850, now);
+    osc.frequency.linearRampToValueAtTime(620, now + 0.12);
+
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  }
+
+  // Tiếng gõ Bàn Phím Cơ (Mechanical Keyboard Blue Switch Click)
+  playKeyClick() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+
+    // Click cao
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    const clickFreq = 2200 + Math.random() * 800;
+    osc.frequency.setValueAtTime(clickFreq, now);
+
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.04);
+
+    // Thud trầm của switch
+    const osc2 = this.ctx.createOscillator();
+    const gain2 = this.ctx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(260 + Math.random() * 60, now + 0.01);
+    gain2.gain.setValueAtTime(0.12, now + 0.01);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    osc2.connect(gain2);
+    gain2.connect(this.ctx.destination);
+    osc2.start(now + 0.01);
+    osc2.stop(now + 0.07);
+  }
+
+  // Tiếng Mưa Rào Ban Đêm (Ambient Rain ASMR)
+  startRainSound() {
+    if (!this.sfxEnabled || this.rainSource) return;
+    this.init();
+    // Tạo pink/white noise buffer
+    const bufferSize = this.ctx.sampleRate * 2;
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      output[i] = (b0 + b1 + b2) * 0.11;
+    }
+
+    this.rainSource = this.ctx.createBufferSource();
+    this.rainSource.buffer = noiseBuffer;
+    this.rainSource.loop = true;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1100, this.ctx.currentTime);
+
+    this.rainGain = this.ctx.createGain();
+    this.rainGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+    this.rainGain.gain.linearRampToValueAtTime(0.12, this.ctx.currentTime + 1.5);
+
+    this.rainSource.connect(filter);
+    filter.connect(this.rainGain);
+    this.rainGain.connect(this.ctx.destination);
+
+    this.rainSource.start();
+  }
+
+  stopRainSound() {
+    if (this.rainSource && this.rainGain) {
+      this.rainGain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
+      setTimeout(() => {
+        if (this.rainSource) {
+          this.rainSource.stop();
+          this.rainSource.disconnect();
+          this.rainSource = null;
+        }
+      }, 900);
+    }
+  }
+
   // Trình phát nhạc Lofi Ban Đêm (Piano & Ambient Rhodes thư giãn)
   startLofiMusic() {
     this.init();

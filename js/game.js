@@ -1,5 +1,5 @@
 /**
- * Main Game Controller - Điều khiển trung tâm, Game Loop 60 FPS, Camera & Minimap
+ * Main Game Controller - Điều khiển trung tâm, Game Loop 60 FPS, Camera, Góc Nhìn POV & Minigame
  */
 
 class Game {
@@ -13,7 +13,7 @@ class Game {
     this.keys = {};
     this.lastTime = 0;
 
-    // Camera mượt mà theo nhân vật với 3 chế độ góc nhìn chuẩn GTA
+    // Camera mượt mà theo nhân vật với 4 chế độ góc nhìn
     this.camera = {
       x: 320,
       y: 420,
@@ -21,13 +21,14 @@ class Game {
       targetY: 420,
       zoom: 1.0,
       targetZoom: 1.0,
-      mode: 0 // 0: Dynamic GTA, 1: Close-up Chibi, 2: Bird's Eye View
+      mode: 0 // 0: Dynamic GTA, 1: POV Cockpit, 2: Close-up Chibi, 3: Flycam
     };
 
     this.cameraModes = [
       { id: 0, name: 'Dynamic GTA 🎥', baseZoom: 1.0, hasLookAhead: true },
-      { id: 1, name: 'Cận Cảnh (Chibi) 🔍', baseZoom: 1.35, hasLookAhead: false },
-      { id: 2, name: 'Toàn Cảnh (Flycam) 🚁', baseZoom: 0.72, hasLookAhead: true }
+      { id: 1, name: 'Buồng Lái POV 🛵', baseZoom: 1.15, hasLookAhead: true, isCockpit: true },
+      { id: 2, name: 'Cận Cảnh (Chibi) 🔍', baseZoom: 1.35, hasLookAhead: false },
+      { id: 3, name: 'Toàn Cảnh (Flycam) 🚁', baseZoom: 0.72, hasLookAhead: true }
     ];
 
     // Khởi tạo các hệ thống
@@ -35,6 +36,15 @@ class Game {
     this.player = new Player(320, 420); // Xuất phát trước cửa phòng trọ
     this.motorcycle = new Motorcycle(390, 440); // Đậu xe bên vỉa hè
     this.quests = new QuestManager(this);
+
+    // Vị trí bàn học máy tính trong phòng trọ
+    this.studyDesk = { x: 260, y: 360 };
+
+    // Xe cộ giao thông đường phố
+    this.traffic = [
+      new TrafficVehicle({ id: 'bus_08', type: 'bus', x: 200, y: 1400, speed: 2.2, dir: 1, startX: 0, endX: 3000 }),
+      new TrafficVehicle({ id: 'colleague_shipper', type: 'scooter', x: 2600, y: 510, speed: 3.5, dir: -1, startX: 0, endX: 3000 })
+    ];
 
     // Danh sách NPCs
     this.npcs = [
@@ -85,6 +95,7 @@ class Game {
     ];
 
     this.initEvents();
+    this.initThesisMinigame();
     this.resize();
     window.addEventListener('resize', () => this.resize());
 
@@ -112,10 +123,22 @@ class Game {
         this.toggleCameraMode();
       }
 
-      // Phím H: Còi xe máy
+      // Phím R: Đổi thời tiết mưa / đêm sao
+      if (e.code === 'KeyR') {
+        this.toggleWeather();
+      }
+
+      // Phím C: Đổi màu sơn xe máy
+      if (e.code === 'KeyC') {
+        this.cycleVehicleColor();
+      }
+
+      // Phím H: Còi xe máy / Vịt vàng kêu quạc quạc
       if (e.code === 'KeyH') {
         if (this.player.isRiding) {
-          window.soundEngine.playHorn();
+          this.motorcycle.triggerDuck();
+          window.soundEngine.playDuckQuack();
+          this.showToast('VỊT VÀNG KÊU QUẠC! 🦆', 'Chú vịt vàng lắc lư kêu bíp bíp!');
         }
       }
 
@@ -146,6 +169,16 @@ class Game {
       btnCam.addEventListener('click', () => this.toggleCameraMode());
     }
 
+    const btnWeather = document.getElementById('btn-toggle-weather');
+    if (btnWeather) {
+      btnWeather.addEventListener('click', () => this.toggleWeather());
+    }
+
+    const btnColor = document.getElementById('btn-toggle-color');
+    if (btnColor) {
+      btnColor.addEventListener('click', () => this.cycleVehicleColor());
+    }
+
     const btnMusic = document.getElementById('btn-toggle-music');
     if (btnMusic) {
       btnMusic.addEventListener('click', () => this.toggleLofi());
@@ -168,6 +201,107 @@ class Game {
     }
   }
 
+  // Minigame Viết Đồ Án Tốt Nghiệp Bằng Bàn Phím Cơ
+  initThesisMinigame() {
+    this.thesisProgress = 0;
+    this.thesisTextIndex = 0;
+    this.thesisLines = [
+      "\\section{Lời Mở Đầu & Mục Tiêu Nghiên Cứu}",
+      "Đề tài: Ứng Dụng Thuật Toán Định Tuyến Tối Ưu Cho Shipper ShopeeFood.",
+      "Sinh viên thực hiện: Nguyễn Hải Đăng - MSSV: 2022xxxx (Năm 4).",
+      "Giảng viên hướng dẫn: TS. Trần Văn Thầy.",
+      "\\subsection{Động lực thực tế}",
+      "Là một sinh viên năm 4 vừa học vừa chạy ShopeeFood trang trải cuộc sống...",
+      "Tôi nhận thấy việc cân bằng giữa học tập và mưu sinh rèn luyện ý chí phi thường.",
+      "\\subsection{Thiết kế hệ thống và Kiến trúc phần mềm}",
+      "Xây dựng thuật toán Dijkstra tìm đường ngắn nhất qua các quán ăn và điểm giao...",
+      "Hệ thống đạt hiệu năng 99.8% đáp ứng thời gian thực dưới 50ms.",
+      "\\subsection{Kết quả kiểm thử & Đánh giá thực nghiệm}",
+      "Thời gian giao trà sữa và cơm sườn giảm 25%, khách hàng đánh giá 5 sao ⭐⭐⭐⭐⭐.",
+      "Tối ưu mức tiêu thụ nhiên liệu xe máy, bảo vệ môi trường và tăng thu nhập.",
+      "\\section{Kết Luận & Tri Ân}",
+      "Lời cảm ơn chân thành đến bản thân vì đã không bao giờ bỏ cuộc dù có những đêm mệt mỏi.",
+      "Đồ án tốt nghiệp hoàn thành xuất sắc! Tương lai tươi sáng đang chờ đón phía trước! 🎉"
+    ];
+
+    window.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('thesis-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        if (e.code === 'Escape') {
+          this.closeThesisModal();
+          return;
+        }
+        // Gõ phím bất kỳ tăng tiến độ
+        this.stepThesis();
+      }
+    });
+
+    const btnClose = document.getElementById('btn-close-thesis');
+    if (btnClose) {
+      btnClose.addEventListener('click', () => this.closeThesisModal());
+    }
+  }
+
+  openThesisModal() {
+    const modal = document.getElementById('thesis-modal');
+    modal.classList.remove('hidden');
+    window.soundEngine.playSparkle();
+  }
+
+  closeThesisModal() {
+    const modal = document.getElementById('thesis-modal');
+    modal.classList.add('hidden');
+  }
+
+  stepThesis() {
+    if (this.thesisProgress >= 100) return;
+
+    this.thesisProgress = Math.min(100, this.thesisProgress + 4);
+    window.soundEngine.playKeyClick();
+
+    document.getElementById('thesis-percent').innerText = `${this.thesisProgress}%`;
+    document.getElementById('thesis-bar-fill').style.width = `${this.thesisProgress}%`;
+
+    const editor = document.getElementById('thesis-editor-content');
+    const line = this.thesisLines[this.thesisTextIndex % this.thesisLines.length];
+    this.thesisTextIndex++;
+
+    const p = document.createElement('div');
+    p.innerText = `> ${line}`;
+    editor.insertBefore(p, editor.lastElementChild);
+    editor.scrollTop = editor.scrollHeight;
+
+    if (this.thesisProgress >= 100) {
+      window.soundEngine.playCoin();
+      window.soundEngine.playSparkle();
+      this.player.energy = 100;
+      this.player.money += 100000;
+      this.showToast('TỐT NGHIỆP XUẤT SẮC! 🎓🎉', 'Bạn đạt điểm 10 Đồ Án Tốt Nghiệp! Nhận thưởng học bổng 100.000đ.');
+    }
+  }
+
+  // Đổi màu xe máy
+  cycleVehicleColor() {
+    const name = this.motorcycle.cycleColor();
+    this.showToast('SƠN MÀU XE MÁY 🎨', `Đã sơn màu mới: ${name}`);
+    window.soundEngine.playSparkle();
+  }
+
+  // Đổi thời tiết (Mưa đêm / Trời sao)
+  toggleWeather() {
+    this.world.isRaining = !this.world.isRaining;
+    const txt = document.getElementById('weather-status-text');
+    if (this.world.isRaining) {
+      if (txt) txt.innerText = 'Trời: Mưa Đêm 🌧️';
+      window.soundEngine.startRainSound();
+      this.showToast('THỜI TIẾT 🌧️', 'Cơn mưa đêm tí tách rơi. Khoác áo mưa và chill nào!');
+    } else {
+      if (txt) txt.innerText = 'Trời: Trăng Sao 🌙';
+      window.soundEngine.stopRainSound();
+      this.showToast('THỜI TIẾT 🌙', 'Mưa tạnh, bầu trời đêm lấp lánh muôn ngàn ánh sao.');
+    }
+  }
+
   toggleCameraMode() {
     this.camera.mode = (this.camera.mode + 1) % this.cameraModes.length;
     const mode = this.cameraModes[this.camera.mode];
@@ -185,29 +319,36 @@ class Game {
     if (window.soundEngine.musicEnabled) {
       window.soundEngine.stopLofiMusic();
       btnMusic.classList.remove('active');
-      txtMusic.innerText = 'Lofi: Đang Tắt';
+      txtMusic.innerText = 'Lofi: Tắt';
     } else {
       window.soundEngine.startLofiMusic();
       btnMusic.classList.add('active');
-      txtMusic.innerText = 'Lofi: Đang Phát 🎶';
+      txtMusic.innerText = 'Lofi: Bật 🎶';
     }
   }
 
   // Xử lý khi nhấn phím [E]
   handleInteraction() {
-    // 1. Nếu đang mở hộp thoại thì đóng lại
+    // 1. Đóng dialog nếu đang mở
     const dialogBox = document.getElementById('dialog-box');
     if (!dialogBox.classList.contains('hidden')) {
       this.closeDialog();
       return;
     }
 
-    // 2. Thử hoàn thành nhiệm vụ tại vị trí hiện tại
+    // 2. Mở minigame Đồ án nếu ở bàn học phòng trọ
+    const distToDesk = Math.hypot(this.player.x - this.studyDesk.x, this.player.y - this.studyDesk.y);
+    if (!this.player.isRiding && distToDesk < 65) {
+      this.openThesisModal();
+      return;
+    }
+
+    // 3. Thử hoàn thành nhiệm vụ tại vị trí hiện tại
     if (this.quests.tryCompleteCurrentQuest(this.player)) {
       return;
     }
 
-    // 3. Kiểm tra lên/xuống xe máy ShopeeFood
+    // 4. Kiểm tra lên/xuống xe máy ShopeeFood
     const distToBike = Math.hypot(this.player.x - this.motorcycle.x, this.player.y - this.motorcycle.y);
     if (this.player.isRiding) {
       this.player.dismountVehicle();
@@ -217,11 +358,11 @@ class Game {
       this.player.mountVehicle(this.motorcycle);
       this.quests.checkProgress(this.player, this.motorcycle);
       window.soundEngine.playSparkle();
-      this.showToast('LÊN XE MÁY 🛵', 'Sẵn sàng lượn phố! Nhấn [H] để bóp còi.');
+      this.showToast('LÊN XE MÁY 🛵', 'Sẵn sàng lượn phố! Nhấn [V] đổi góc nhìn, [H] bóp còi vịt.');
       return;
     }
 
-    // 4. Kiểm tra tương tác với NPC xung quanh
+    // 5. Tương tác NPC
     for (const npc of this.npcs) {
       const dist = Math.hypot(this.player.x - npc.x, this.player.y - npc.y);
       if (dist < 50) {
@@ -262,7 +403,7 @@ class Game {
   }
 
   update() {
-    // 1. Cập nhật thế giới (hoa rơi)
+    // 1. Cập nhật thế giới
     this.world.update();
 
     // 2. Cập nhật Player & Xe
@@ -271,23 +412,28 @@ class Game {
       this.motorcycle.update(this.keys, this.world);
     }
 
-    // 3. Cập nhật NPCs
+    // 3. Cập nhật Xe cộ giao thông
+    for (const t of this.traffic) {
+      t.update();
+    }
+
+    // 4. Cập nhật NPCs
     for (const npc of this.npcs) {
       npc.update();
     }
 
-    // 4. Kiểm tra tiến độ nhiệm vụ
+    // 5. Kiểm tra tiến độ nhiệm vụ
     this.quests.checkProgress(this.player, this.motorcycle);
 
-    // 5. Cập nhật Camera theo góc nhìn và tốc độ xe (GTA Dynamic Camera)
+    // 6. Cập nhật Camera theo góc nhìn và tốc độ xe (GTA Dynamic & POV Cockpit)
     const curMode = this.cameraModes[this.camera.mode];
     let focusX = this.player.x;
     let focusY = this.player.y;
 
-    // Look-ahead: Khi lái xe hoặc chạy nhanh, camera nhìn xa về phía trước theo hướng di chuyển
     if (curMode.hasLookAhead) {
       if (this.player.isRiding) {
-        const leadDist = this.motorcycle.speed * 25; // xe phóng càng nhanh, camera nhìn càng xa phía trước
+        // Tầm nhìn xa về phía trước theo hướng xe chạy
+        const leadDist = curMode.isCockpit ? this.motorcycle.speed * 32 : this.motorcycle.speed * 25;
         focusX += Math.cos(this.motorcycle.angle) * leadDist;
         focusY += Math.sin(this.motorcycle.angle) * leadDist;
       } else if (this.player.isSprinting && this.player.isMoving) {
@@ -298,11 +444,10 @@ class Game {
       }
     }
 
-    // Dynamic Zoom: Khi lái xe tốc độ cao ở chế độ Dynamic GTA, zoom out nhẹ tạo cảm giác lướt gió tốc độ
     let desiredZoom = curMode.baseZoom;
     if (this.camera.mode === 0 && this.player.isRiding) {
       const speedRatio = Math.abs(this.motorcycle.speed) / this.motorcycle.maxSpeed;
-      desiredZoom = 1.05 - speedRatio * 0.16; // 1.05x -> 0.89x
+      desiredZoom = 1.05 - speedRatio * 0.16;
     }
 
     this.camera.targetZoom = desiredZoom;
@@ -314,21 +459,18 @@ class Game {
     this.camera.x += (this.camera.targetX - this.camera.x) * 0.08;
     this.camera.y += (this.camera.targetY - this.camera.y) * 0.08;
 
-    // Giới hạn camera trong thế giới
     this.camera.x = Math.max(100, Math.min(this.camera.x, this.world.width - 100));
     this.camera.y = Math.max(100, Math.min(this.camera.y, this.world.height - 100));
 
-    // 6. Cập nhật UI & Gợi ý tương tác (Prompt)
+    // 7. Cập nhật UI & Gợi ý tương tác (Prompt)
     this.updateUI();
   }
 
   updateUI() {
-    // Cập nhật tiền & tinh thần
     document.getElementById('money-display').innerText = this.player.money.toLocaleString('vi-VN') + ' đ';
     document.getElementById('energy-text').innerText = `Tinh thần: ${Math.floor(this.player.energy)}%`;
     document.getElementById('energy-bar-fill').style.width = `${this.player.energy}%`;
 
-    // Kiểm tra gợi ý tương tác
     const prompt = document.getElementById('interact-prompt');
     const promptText = document.getElementById('interact-text');
 
@@ -344,7 +486,15 @@ class Game {
       }
     }
 
-    // Nếu gần NPC
+    // Bàn học gõ đồ án
+    if (!promptMsg && !this.player.isRiding) {
+      const distToDesk = Math.hypot(this.player.x - this.studyDesk.x, this.player.y - this.studyDesk.y);
+      if (distToDesk < 65) {
+        promptMsg = 'Mở Laptop gõ Đồ Án Năm 4 [E]';
+      }
+    }
+
+    // NPC
     if (!promptMsg) {
       for (const npc of this.npcs) {
         const dist = Math.hypot(this.player.x - npc.x, this.player.y - npc.y);
@@ -355,7 +505,7 @@ class Game {
       }
     }
 
-    // Nếu ở điểm nhiệm vụ
+    // Điểm nhiệm vụ
     if (!promptMsg && curQuest && curQuest.type !== 'endless') {
       const distToTarget = Math.hypot(this.player.x - curQuest.targetX, this.player.y - curQuest.targetY);
       if (distToTarget <= curQuest.targetRadius) {
@@ -379,7 +529,7 @@ class Game {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     ctx.save();
-    // Di chuyển màn hình theo Camera và áp dụng Zoom mượt mà
+    // Di chuyển màn hình theo Camera và áp dụng Zoom
     ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
     ctx.scale(this.camera.zoom, this.camera.zoom);
     ctx.translate(-Math.floor(this.camera.x), -Math.floor(this.camera.y));
@@ -390,29 +540,43 @@ class Game {
     // 2. Tòa nhà & Công trình
     this.world.renderBuildings(ctx);
 
-    // 3. Điểm đánh dấu nhiệm vụ trên mặt đất (Pulsing Quest Marker)
+    // 3. Điểm đánh dấu nhiệm vụ
     this.renderQuestMarker(ctx);
 
-    // 4. Xe máy ShopeeFood
-    this.motorcycle.render(ctx);
+    // 4. Xe cộ giao thông đường phố
+    for (const t of this.traffic) {
+      t.render(ctx);
+    }
 
-    // 5. NPCs
+    // 5. Xe máy ShopeeFood
+    this.motorcycle.render(ctx, this.world.isRaining);
+
+    // 6. NPCs
     for (const npc of this.npcs) {
       npc.render(ctx);
     }
 
-    // 6. Nhân vật Người chơi (Player)
-    this.player.render(ctx);
+    // 7. Nhân vật Người chơi
+    this.player.render(ctx, this.world.isRaining);
 
-    // 7. Ánh sáng đèn đường đêm
+    // 8. Ánh sáng đèn đường đêm
     this.world.renderLights(ctx);
 
-    // 8. Cánh hoa anh đào rơi theo gió
+    // 9. Cánh hoa anh đào rơi theo gió
     this.world.renderPetals(ctx);
+
+    // 10. Mưa rơi trên thế giới
+    this.world.renderRain(ctx);
 
     ctx.restore();
 
-    // 9. Vẽ Minimap Radar góc màn hình
+    // 11. Góc nhìn buồng lái thứ nhất (First-Person POV Cockpit View)
+    const curMode = this.cameraModes[this.camera.mode];
+    if (curMode.isCockpit && this.player.isRiding) {
+      this.motorcycle.renderCockpit(ctx, this.canvas.width, this.canvas.height, this.quests.getCurrentQuest());
+    }
+
+    // 12. Minimap Radar góc màn hình
     this.renderMinimap();
   }
 
@@ -423,26 +587,22 @@ class Game {
     const time = Date.now() * 0.003;
     const pulseR = q.targetRadius + Math.sin(time) * 8;
 
-    // Vòng tròn ánh sáng tỏa nhịp
     ctx.strokeStyle = '#ee4d2d';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(q.targetX, q.targetY, pulseR, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Vệt sáng tâm
     ctx.fillStyle = 'rgba(238, 77, 45, 0.25)';
     ctx.beginPath();
     ctx.arc(q.targetX, q.targetY, pulseR, 0, Math.PI * 2);
     ctx.fill();
 
-    // Biểu tượng mục tiêu
     ctx.font = '22px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('📍', q.targetX, q.targetY - pulseR - 6);
   }
 
-  // Vẽ Minimap Radar chuẩn GTA
   renderMinimap() {
     const mCtx = this.minimapCtx;
     const mW = this.minimapCanvas.width;
@@ -450,24 +610,19 @@ class Game {
 
     mCtx.clearRect(0, 0, mW, mH);
 
-    // Bán kính radar
     const radarRadius = mW / 2;
-    const scale = 0.085; // Tỉ lệ thu nhỏ
+    const scale = 0.085;
 
     mCtx.save();
-    // Cắt theo hình tròn
     mCtx.beginPath();
     mCtx.arc(radarRadius, radarRadius, radarRadius - 2, 0, Math.PI * 2);
     mCtx.clip();
 
-    // Nền minimap
     mCtx.fillStyle = '#0a0d14';
     mCtx.fillRect(0, 0, mW, mH);
 
-    // Tâm minimap là vị trí Player
     mCtx.translate(radarRadius, radarRadius);
 
-    // Vẽ đường bộ thu nhỏ
     mCtx.fillStyle = '#1e293b';
     for (const r of this.world.roads) {
       const rx = (r.x - this.player.x) * scale;
@@ -475,13 +630,11 @@ class Game {
       mCtx.fillRect(rx, ry, r.w * scale, r.h * scale);
     }
 
-    // Công viên thu nhỏ
     mCtx.fillStyle = '#14532d';
     const px = (this.world.park.x - this.player.x) * scale;
     const py = (this.world.park.y - this.player.y) * scale;
     mCtx.fillRect(px, py, this.world.park.w * scale, this.world.park.h * scale);
 
-    // Các tòa nhà thu nhỏ
     for (const b of this.world.locations) {
       const bx = (b.x - this.player.x) * scale;
       const by = (b.y - this.player.y) * scale;
@@ -489,7 +642,7 @@ class Game {
       mCtx.fillRect(bx, by, b.w * scale, b.h * scale);
     }
 
-    // Xe máy trên Minimap (chấm vàng)
+    // Xe máy
     if (!this.player.isRiding) {
       const vx = (this.motorcycle.x - this.player.x) * scale;
       const vy = (this.motorcycle.y - this.player.y) * scale;
@@ -499,13 +652,12 @@ class Game {
       mCtx.fill();
     }
 
-    // Điểm nhiệm vụ trên Minimap (chấm đỏ cam nhấp nháy)
+    // Điểm nhiệm vụ
     const q = this.quests.getCurrentQuest();
     if (q && q.type !== 'endless' && q.targetRadius > 0) {
       const qx = (q.targetX - this.player.x) * scale;
       const qy = (q.targetY - this.player.y) * scale;
 
-      // Giới hạn trong viền radar nếu ở quá xa
       const dist = Math.hypot(qx, qy);
       const maxR = radarRadius - 12;
       let finalX = qx;
@@ -524,7 +676,7 @@ class Game {
       mCtx.stroke();
     }
 
-    // Người chơi ở chính giữa Minimap (mũi tên định hướng)
+    // Người chơi
     mCtx.fillStyle = '#38bdf8';
     mCtx.beginPath();
     mCtx.arc(0, 0, 4, 0, Math.PI * 2);
@@ -535,7 +687,6 @@ class Game {
 
     mCtx.restore();
 
-    // Vạch viền radar
     mCtx.strokeStyle = 'rgba(238, 77, 45, 0.6)';
     mCtx.lineWidth = 2;
     mCtx.beginPath();

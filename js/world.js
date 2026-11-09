@@ -158,6 +158,19 @@ class WorldMap {
       });
     }
 
+    // Hệ thống thời tiết mưa đêm (Cozy Rain)
+    this.isRaining = false;
+    this.rainDrops = [];
+    for (let i = 0; i < 220; i++) {
+      this.rainDrops.push({
+        x: Math.random() * this.width,
+        y: Math.random() * this.height,
+        len: 12 + Math.random() * 10,
+        speed: 16 + Math.random() * 8
+      });
+    }
+    this.puddleRipples = [];
+
     // Ghế đá công viên
     this.benches = [
       { x: 1020, y: 920, w: 50, h: 20 },
@@ -166,7 +179,7 @@ class WorldMap {
     ];
   }
 
-  // Cập nhật vị trí cánh hoa rơi
+  // Cập nhật vị trí cánh hoa rơi & hạt mưa
   update() {
     for (const p of this.petals) {
       p.x += p.speedX;
@@ -180,6 +193,33 @@ class WorldMap {
       if (p.x > this.width) {
         p.x = -20;
       }
+    }
+
+    // Cập nhật hạt mưa & gợn sóng nước
+    if (this.isRaining) {
+      for (const r of this.rainDrops) {
+        r.x -= 2.5;
+        r.y += r.speed;
+        if (r.y > this.height) {
+          r.y = 0;
+          r.x = Math.random() * this.width;
+          if (Math.random() > 0.6) {
+            this.puddleRipples.push({
+              x: r.x,
+              y: Math.random() * this.height,
+              radius: 1,
+              maxRadius: 6 + Math.random() * 6,
+              alpha: 0.6
+            });
+          }
+        }
+      }
+
+      this.puddleRipples.forEach(p => {
+        p.radius += 0.5;
+        p.alpha -= 0.035;
+      });
+      this.puddleRipples = this.puddleRipples.filter(p => p.alpha > 0);
     }
   }
 
@@ -404,6 +444,30 @@ class WorldMap {
       ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
+    }
+  }
+
+  // Vẽ hạt mưa & gợn sóng nước (Rain System)
+  renderRain(ctx) {
+    if (!this.isRaining) return;
+
+    // Vệt mưa rơi nghiêng
+    ctx.strokeStyle = 'rgba(186, 230, 253, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (const r of this.rainDrops) {
+      ctx.moveTo(r.x, r.y);
+      ctx.lineTo(r.x - 4, r.y + r.len);
+    }
+    ctx.stroke();
+
+    // Vòng tròn gợn sóng nước loang trên mặt đất
+    for (const p of this.puddleRipples) {
+      ctx.strokeStyle = `rgba(186, 230, 253, ${p.alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, p.radius, p.radius * 0.45, 0, 0, Math.PI * 2);
+      ctx.stroke();
     }
   }
 
